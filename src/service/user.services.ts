@@ -1,12 +1,12 @@
 // UserService.ts
 
+import { Service } from "typedi";
 import { User } from "../entity/user.entity";
 import { UserRepository } from "../repositories/user.repository";
 import { ISuccessResponse } from "../types";
 
-
-
- class UserService {
+@Service()
+export class UserService {
   async getAllUsers(): Promise<ISuccessResponse> {
     try {
       const userData = await UserRepository.find();
@@ -58,6 +58,21 @@ import { ISuccessResponse } from "../types";
 
   async CreateUser(userData: User): Promise<ISuccessResponse> {
     try {
+      const existingUser = await UserRepository.createQueryBuilder("user")
+        .where("user.email = :email OR user.phoneNumber = :phoneNumber", {
+          email: userData.email,
+          phoneNumber: userData.phoneNumber,
+        })
+        .getOne();
+
+      if (existingUser) {
+        return {
+          success: false,
+          code: 400,
+          message: "Email or Phone number already exists.",
+          data: null,
+        };
+      }
       const data = await UserRepository.save(userData);
       return {
         code: 201,
@@ -70,6 +85,43 @@ import { ISuccessResponse } from "../types";
         success: false,
         code: 500,
         message: "Failed To Save User Details.",
+        data: null,
+      };
+    }
+  }
+
+  async updateUser(
+    id: number,
+    userData: Partial<User>
+  ): Promise<ISuccessResponse> {
+    try {
+      const existingUser = await UserRepository.findOne({ where: { id } });
+
+      if (!existingUser) {
+        return {
+          success: false,
+          code: 404,
+          message: "User Not Found.",
+          data: null,
+        };
+      }
+
+      const updatedUser = await UserRepository.save({
+        ...existingUser,
+        ...userData,
+      });
+
+      return {
+        code: 200,
+        success: true,
+        message: "User Data Updated successfully.",
+        data: updatedUser,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        code: 500,
+        message: "Failed To Update User Details.",
         data: null,
       };
     }
@@ -103,4 +155,4 @@ import { ISuccessResponse } from "../types";
   }
 }
 
-export default new UserService();
+// export default new UserService();

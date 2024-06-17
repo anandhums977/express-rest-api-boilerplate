@@ -1,10 +1,11 @@
-import { myDataSource } from "./app-data-source";
 import "reflect-metadata"; 
-import {createExpressServer} from "routing-controllers";
+import Container from "typedi";
+import {createExpressServer, useContainer} from "routing-controllers";
+import { myDataSource } from "./app-data-source";
 import { LoggingMiddleware } from "./middlewares/sample.middleware";
 
 
-
+useContainer(Container);
 async function initializeDataSource() {
     try {
         await myDataSource.initialize();
